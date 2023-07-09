@@ -59,6 +59,15 @@ public class IntegrationTests
         Assert.Equal(12, occupancy.Total);
     }
 
+    [Fact]
+    public void ThreePlayersWithChat()
+    {
+        var occupancy = RunTest("thresholded3playerswithchat.png");
+
+        Assert.Equal(3, occupancy.Occupied);
+        Assert.Equal(12, occupancy.Total);
+    }
+
     private static Occupancy RunTest(string filename)
     {
         var imagePath = GetImagePath(filename);

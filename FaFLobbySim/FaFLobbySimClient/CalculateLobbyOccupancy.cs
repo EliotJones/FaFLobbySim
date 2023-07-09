@@ -127,6 +127,10 @@ internal class CalculateLobbyOccupancyHandler
         var rowCount = 0;
         var occupied = 0;
         var headerIndex = lines.IndexOf(possibleHeaderRow);
+
+        var linesWithNicknames = new List<List<WordRegion>>();
+        var firstCol = columnXs[0];
+        WordRegion? lastNickname = null;
         for (var i = 0; i < lines.Count; i++)
         {
             if (i <= headerIndex)
@@ -135,6 +139,31 @@ internal class CalculateLobbyOccupancyHandler
             }
 
             var line = lines[i];
+
+            var nickFirstWord = line.FirstOrDefault(x => Math.Abs(x.Bounds.TopLeft.X - firstCol.left) < 10);
+
+            if (nickFirstWord == null)
+            {
+                continue;
+            }
+
+            if (lastNickname != null)
+            {
+                var gap = Math.Abs(lastNickname.Bounds.TopLeft.Y - nickFirstWord.Bounds.TopLeft.Y);
+
+                if (gap > 70)
+                {
+                    break;
+                }
+            }
+
+            lastNickname = nickFirstWord;
+            linesWithNicknames.Add(line);
+        }
+
+        for (var i = 0; i < linesWithNicknames.Count; i++)
+        {
+            var line = linesWithNicknames[i];
             for (var j = 0; j < columnXs.Count; j++)
             {
                 var column = columnXs[j];
