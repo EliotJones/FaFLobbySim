@@ -68,6 +68,15 @@ public class IntegrationTests
         Assert.Equal(12, occupancy.Total);
     }
 
+    [Fact]
+    public void FullTwelvePlayerGame()
+    {
+        var occupancy = RunTest("thresholded56b8d021.png");
+
+        Assert.Equal(12, occupancy.Occupied);
+        Assert.Equal(12, occupancy.Total);
+    }
+
     private static Occupancy RunTest(string filename)
     {
         var imagePath = GetImagePath(filename);

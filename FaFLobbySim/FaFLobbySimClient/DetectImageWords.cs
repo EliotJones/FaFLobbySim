@@ -113,7 +113,7 @@ internal class WordDetector
         var width = rectangle.Width;
 
         // Throw away some garbage/noise.
-        if (height > 30 || width > 120 || height <= 3 || width <= 2)
+        if (height > 30 || width > 250 || height <= 3 || width <= 2)
         {
             return false;
         }
