@@ -44,6 +44,11 @@ internal class CalculateLobbyOccupancyHandler
                     resultList.Add(otherRegion);
                     consumedIndices.Add(j);
                 }
+                else if (Math.Abs(region.Bounds.TopLeft.Y - otherRegion.Bounds.TopLeft.Y) < 2 && dy < 10)
+                {
+                    resultList.Add(otherRegion);
+                    consumedIndices.Add(j);
+                }
                 else if (otherRegion.Bounds.TopLeft.Y >= region.Bounds.TopLeft.Y
                          && otherRegion.Bounds.BottomRight.Y <= region.Bounds.BottomRight.Y)
                 {
