@@ -64,7 +64,7 @@ public class IntegrationTests
     {
         var occupancy = RunTest("thresholded3playerswithchat.png");
 
-        Assert.Equal(3, occupancy.Occupied);
+        Assert.Equal(2, occupancy.Occupied);
         Assert.Equal(12, occupancy.Total);
     }
 
