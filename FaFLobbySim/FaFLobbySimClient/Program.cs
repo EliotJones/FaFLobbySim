@@ -219,10 +219,17 @@ public static class Program
          * FFFFFFFFF
          * FFFFFFFFF
          *
-         * But actually because we scan left-right top-bottom we only want pixels following this pixel:
-         * _____
-         * __OFF
-         * FFFFF
+         * But actually because we scan left-right top-bottom we only want pixels following this pixel or to its top right:
+         *
+         * _____FFFF
+         * _____FFFF
+         * _____FFFF
+         * _____FFFF
+         * FFFFOFFFF
+         * FFFFFFFFF
+         * FFFFFFFFF
+         * FFFFFFFFF
+         * FFFFFFFFF
          */
         const int windowSize = 9;
         const int halfWay = 4;
@@ -235,7 +242,7 @@ public static class Program
                     continue;
                 }
 
-                if (y < halfWay && x < halfWay)
+                if (y < halfWay && x <= halfWay)
                 {
                     continue;
                 }
