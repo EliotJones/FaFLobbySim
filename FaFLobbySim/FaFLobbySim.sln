@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33712.159
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaFLobbySimClient", "FaFLobbySimClient\FaFLobbySimClient.csproj", "{46941CF1-5688-4887-9351-BD64F9FEBBBD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{46941CF1-5688-4887-9351-BD64F9FEBBBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46941CF1-5688-4887-9351-BD64F9FEBBBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46941CF1-5688-4887-9351-BD64F9FEBBBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46941CF1-5688-4887-9351-BD64F9FEBBBD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {452E1112-CB66-4915-AFD3-8FF02666DB67}
+	EndGlobalSection
+EndGlobal
