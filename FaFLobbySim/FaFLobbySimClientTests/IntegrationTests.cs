@@ -32,6 +32,24 @@ public class IntegrationTests
         Assert.Equal(4, occupancy.Total);
     }
 
+    [Fact]
+    public void SinglePlayerHostMaximized()
+    {
+        var occupancy = RunTest("original082f3293.png");
+
+        Assert.Equal(1, occupancy.Occupied);
+        Assert.Equal(8, occupancy.Total);
+    }
+
+    [Fact]
+    public void TwoNonContiguousPlayersMaximized()
+    {
+        var occupancy = RunTest("original97f1247d.png");
+
+        Assert.Equal(2, occupancy.Occupied);
+        Assert.Equal(12, occupancy.Total);
+    }
+
     private static Occupancy RunTest(string filename)
     {
         var imagePath = GetImagePath(filename);

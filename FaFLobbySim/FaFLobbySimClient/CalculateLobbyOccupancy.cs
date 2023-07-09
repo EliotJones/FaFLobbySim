@@ -69,6 +69,11 @@ internal class CalculateLobbyOccupancyHandler
             var maxX = line.Max(x => x.Bounds.BottomRight.X);
             var width = maxX - minX;
 
+            if (line.Count < 6)
+            {
+                continue;
+            }
+
             if (maxY < yThreshold && width > requiredWidth)
             {
                 possibleHeaderRow = line;
