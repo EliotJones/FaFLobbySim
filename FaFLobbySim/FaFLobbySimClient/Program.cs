@@ -19,6 +19,7 @@ public static class Program
 {
     public static void Main(string[] args)
     {
+        var occHandle = new CalculateLobbyOccupancyHandler();
         var process = Process.GetProcesses().FirstOrDefault(x => x.MainWindowTitle == "Forged Alliance");
         if (process == null)
         {
@@ -54,10 +55,13 @@ public static class Program
 
                     var image = GetThresholdedImage(screenshot, PathGetter);
 
+                    var regions = WordDetection(image, PathGetter);
+
                     var sw = Stopwatch.StartNew();
-                    // image = Image.Load<Rgb24>(@"C:\temp\tester.png");
-                    WordDetection(image, PathGetter);
-                    Console.WriteLine("Runtime was: " + sw.ElapsedMilliseconds + " milliseconds");
+
+                    var occupancy = occHandle.Calculate(regions, new WidthHeight(image.Width, image.Height));
+
+                    Console.WriteLine("Runtime of occupancy calculation was: " + sw.ElapsedMilliseconds + " milliseconds");
                 }
             } while (child != null);
         }
@@ -67,11 +71,11 @@ public static class Program
     private static CaptureImage GetScreenshot(Window window, AutomationElement pane, GetFilePath savePathGetter)
     {
         window.Focus();
-        var ss = Capture.Element(pane);
+        var imageCapture = Capture.Element(pane);
 
-        ss.ToFile(savePathGetter("original.png"));
+        imageCapture.ToFile(savePathGetter("original.png"));
 
-        return ss;
+        return imageCapture;
     }
 
     private static Image<Rgb24> GetThresholdedImage(CaptureImage screenshot, GetFilePath savePathGetter)
@@ -91,8 +95,10 @@ public static class Program
         return image.CloneAs<Rgb24>();
     }
 
-    private static Image WordDetection(Image<Rgb24> grayscaleImage, GetFilePath savePathGetter)
+    private static IReadOnlyList<WordRegion> WordDetection(Image<Rgb24> grayscaleImage, GetFilePath savePathGetter)
     {
+        var sw = Stopwatch.StartNew();
+
         var wh = new WidthHeight(grayscaleImage.Width, grayscaleImage.Height);
         var image = FlattenThresholded(grayscaleImage, wh);
         var visited = new HashSet<int>();
@@ -128,9 +134,11 @@ public static class Program
             }
         }
 
-        grayscaleImage.SaveAsPng(savePathGetter("whatever.png"));
+        Console.WriteLine("Words detected in: " + sw.ElapsedMilliseconds + " milliseconds");
 
-        return grayscaleImage;
+        grayscaleImage.SaveAsPng(savePathGetter("words-detected.png"));
+
+        return regions;
     }
 
     private static bool TryConvertRegion(
@@ -191,8 +199,6 @@ public static class Program
         {
             image[maxX.X, i] = new Rgb24(100, 255, 0);
         }
-
-        image.SaveAsPng(filePathGetter("words-detected.png"));
 
         region = new WordRegion
         {
@@ -346,5 +352,4 @@ public static class Program
         return result;
     }
 
-    private record WidthHeight(int Width, int Height);
 }
