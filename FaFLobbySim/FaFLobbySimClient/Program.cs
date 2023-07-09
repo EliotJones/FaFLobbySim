@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections;
+using System.Diagnostics;
 using System.Drawing;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
@@ -105,7 +106,7 @@ public static class Program
                 var flatIndex = (row * grayscaleImage.Width) + col;
                 var p = image[flatIndex];
 
-                if (p != 255)
+                if (!p)
                 {
                     // Skip black pixels
                     continue;
@@ -166,7 +167,7 @@ public static class Program
         return grayscaleImage;
     }
 
-    private static void GrowFromPixel(byte[] image, int index,
+    private static void GrowFromPixel(BitArray image, int index,
         WidthHeight widthHeight,
         HashSet<int> everVisited,
         HashSet<int> inRegionLocal,
@@ -174,7 +175,7 @@ public static class Program
     {
         everVisited.Add(index);
 
-        if (image[index] == 255)
+        if (image[index])
         {
             inRegionLocal.Add(index);
         }
@@ -194,7 +195,7 @@ public static class Program
 
             everVisited.Add(surrounding);
 
-            if (image[surrounding] == 0)
+            if (!image[surrounding])
             {
                 continue;
             }
@@ -283,9 +284,9 @@ public static class Program
         return true;
     }
 
-    private static byte[] FlattenThresholded(Image<Rgb24> image, WidthHeight wh)
+    private static BitArray FlattenThresholded(Image<Rgb24> image, WidthHeight wh)
     {
-        var result = new byte[image.Height * image.Width];
+        var result = new BitArray(image.Height * image.Width);
 
         for (int row = 0; row < image.Height; row++)
         {
@@ -294,7 +295,7 @@ public static class Program
                 var flatIndex = XyToFlat(col, row, wh);
                 if (image[col, row].R == 255)
                 {
-                    result[flatIndex] = 255;
+                    result[flatIndex] = true;
                 }
             }
         }
