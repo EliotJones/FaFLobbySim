@@ -6,32 +6,35 @@ internal class CalculateLobbyOccupancyHandler
 {
     public Occupancy? Calculate(IReadOnlyList<WordRegion> regions, WidthHeight widthHeight)
     {
+        var thresholdY = widthHeight.Width * 0.5f;
+
         var lines = new List<List<WordRegion>>();
 
         var consumedIndices = new HashSet<int>();
         for (var i = 0; i < regions.Count; i++)
         {
-            if (consumedIndices.Contains(i))
+            var region = regions[i];
+
+            // Don't let right hand side of screen serve as pivot for grouping into lines
+            if (consumedIndices.Contains(i) || region.Bounds.TopLeft.X >= thresholdY)
             {
                 continue;
             }
 
             consumedIndices.Add(i);
 
-            var region = regions[i];
 
             var resultList = new List<WordRegion>
             {
                 region
             };
 
-            for (int j = i + 1; j < regions.Count; j++)
+            for (int j = 0; j < regions.Count; j++)
             {
                 if (consumedIndices.Contains(j))
                 {
                     continue;
                 }
-
                 var otherRegion = regions[j];
 
                 var dy = Math.Abs(region.Bounds.BottomRight.Y - otherRegion.Bounds.BottomRight.Y);
