@@ -13,4 +13,9 @@
     <PackageReference Include="SixLabors.ImageSharp" Version="2.1.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="FaFLobbySimClientTests" />
+  </ItemGroup>
+
+
 </Project>
