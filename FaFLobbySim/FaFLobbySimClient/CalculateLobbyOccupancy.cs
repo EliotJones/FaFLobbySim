@@ -95,15 +95,20 @@ internal class CalculateLobbyOccupancyHandler
         }
 
         // Split the screen into a table under the words, one word per-column.
+        var foundStart = false;
         var columnXs = new List<(int left, int right)>();
         for (var i = 0; i < possibleHeaderRow.Count; i++)
         {
             var region = possibleHeaderRow[i];
 
             // Only select the column starting 'Nickname', a word of length > 50 pixels
-            if (region.Bounds.Width < 50)
+            if (region.Bounds.Width < 50 && !foundStart)
             {
                 continue;
+            }
+            else
+            {
+                foundStart = true;
             }
 
             // Skip the last 2 columns, they're probably garbage noise
@@ -160,6 +165,7 @@ internal class CalculateLobbyOccupancyHandler
                 {
                     // A 'word' in another column is team number, faction logo, color block, CPU indicator, etc.
                     occupied++;
+                    break;
                 }
             }
         }

@@ -50,6 +50,15 @@ public class IntegrationTests
         Assert.Equal(12, occupancy.Total);
     }
 
+    [Fact]
+    public void FourPlayersWindowed()
+    {
+        var occupancy = RunTest("original531973b7.png");
+
+        Assert.Equal(4, occupancy.Occupied);
+        Assert.Equal(12, occupancy.Total);
+    }
+
     private static Occupancy RunTest(string filename)
     {
         var imagePath = GetImagePath(filename);
