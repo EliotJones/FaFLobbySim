@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Diagnostics;
-using System.Drawing;
+using System.Diagnostics.CodeAnalysis;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Capturing;
@@ -28,14 +28,15 @@ public static class Program
         }
 
         var screenid = Guid.NewGuid().ToString("D")[..8];
-        GetFilePath pathGetter = fileName =>
+
+        string PathGetter(string fileName)
         {
             var filenameonly = Path.GetFileNameWithoutExtension(fileName);
 
             var path = Path.Combine(@"D:\temp\", filenameonly + screenid + Path.GetExtension(fileName));
 
             return path;
-        };
+        }
 
         var app = Application.Attach(process);
         using (var auto = new UIA3Automation())
@@ -49,17 +50,16 @@ public static class Program
 
                 if (child?.ControlType == ControlType.Pane)
                 {
-                    var screenshot = GetScreenshot(window, child, pathGetter);
+                    var screenshot = GetScreenshot(window, child, PathGetter);
 
-                    var image = GetThresholdedImage(screenshot, pathGetter);
+                    var image = GetThresholdedImage(screenshot, PathGetter);
 
                     var sw = Stopwatch.StartNew();
                     // image = Image.Load<Rgb24>(@"C:\temp\tester.png");
-                    WordDetection(image, pathGetter);
+                    WordDetection(image, PathGetter);
                     Console.WriteLine("Runtime was: " + sw.ElapsedMilliseconds + " milliseconds");
                 }
             } while (child != null);
-            var buttons = window.FindAllDescendants(x => x.ByControlType(ControlType.Button));
         }
         Console.WriteLine("Hello, World!");
     }
@@ -97,7 +97,7 @@ public static class Program
         var image = FlattenThresholded(grayscaleImage, wh);
         var visited = new HashSet<int>();
         var inRegion = new HashSet<int>();
-        var regions = new List<List<(int x, int y)>>();
+        var regions = new List<WordRegion>();
 
         for (int row = 0; row < grayscaleImage.Height; row++)
         {
@@ -121,43 +121,9 @@ public static class Program
                 inRegion.Clear();
                 GrowFromPixel(image, flatIndex, wh, visited, inRegion, ref size);
 
-                var xy = inRegion.Select(i => FlatToXy(i, wh)).ToList();
-
-                var minX = xy.MinBy(i => i.x);
-                var maxX = xy.MaxBy(i => i.x);
-                var minY = xy.MinBy(i => i.y);
-                var maxY = xy.MaxBy(i => i.y);
-
-                var height = maxY.y - minY.y;
-                var width = maxX.x - minX.x;
-
-                // Throw away some garbage.
-                if (height > 30 || width > 120 || height <= 3 || width <= 2)
+                if (TryConvertRegion(inRegion, wh, grayscaleImage, savePathGetter, out var region))
                 {
-                    continue;
-                }
-
-                regions.Add(xy);
-
-                grayscaleImage[minX.x, minY.y] = new Rgb24(0, 0, 255);
-                for (int i = minX.x + 1; i <= maxX.x; i++)
-                {
-                    grayscaleImage[i, minY.y] = new Rgb24(0, 20, 250);
-                }
-
-                for (int i = minY.y + 1; i <= maxY.y; i++)
-                {
-                    grayscaleImage[minX.x, i] = new Rgb24(10, 200, 0);
-                }
-
-                for (int i = minX.x; i < maxX.x; i++)
-                {
-                    grayscaleImage[i, maxY.y] = new Rgb24(200, 10, 0);
-                }
-
-                for (int i = minY.y; i < maxY.y; i++)
-                {
-                    grayscaleImage[maxX.x, i] = new Rgb24(100, 255, 0);
+                    regions.Add(region);
                 }
             }
         }
@@ -165,6 +131,76 @@ public static class Program
         grayscaleImage.SaveAsPng(savePathGetter("whatever.png"));
 
         return grayscaleImage;
+    }
+
+    private static bool TryConvertRegion(
+        HashSet<int> pixels, 
+        WidthHeight wh,
+        Image<Rgb24> image,
+        GetFilePath filePathGetter,
+       [NotNullWhen(true)] out WordRegion? region)
+    {
+        region = null;
+        if (pixels.Count < 5)
+        {
+            return false;
+        }
+
+        var xy = pixels.Select(i =>
+        {
+            var (x, y) = FlatToXy(i, wh);
+
+            return new FafPoint((short)x, (short)y);
+        }).ToArray();
+
+        var minX = xy.MinBy(i => i.X);
+        var maxX = xy.MaxBy(i => i.X);
+        var minY = xy.MinBy(i => i.Y);
+        var maxY = xy.MaxBy(i => i.Y);
+
+        var rectangle = new FafRectangle(
+            new FafPoint(minX.X, minY.Y),
+            new FafPoint(maxX.X, maxY.Y));
+
+        var height = rectangle.Height;
+        var width = rectangle.Width;
+
+        // Throw away some garbage/noise.
+        if (height > 30 || width > 120 || height <= 3 || width <= 2)
+        {
+            return false;
+        }
+
+        image[minX.X, minY.Y] = new Rgb24(0, 0, 255);
+        for (int i = minX.X + 1; i <= maxX.X; i++)
+        {
+            image[i, minY.Y] = new Rgb24(0, 20, 250);
+        }
+
+        for (int i = minY.Y + 1; i <= maxY.Y; i++)
+        {
+            image[minX.X, i] = new Rgb24(10, 200, 0);
+        }
+
+        for (int i = minX.X; i < maxX.X; i++)
+        {
+            image[i, maxY.Y] = new Rgb24(200, 10, 0);
+        }
+
+        for (int i = minY.Y; i < maxY.Y; i++)
+        {
+            image[maxX.X, i] = new Rgb24(100, 255, 0);
+        }
+
+        image.SaveAsPng(filePathGetter("words-detected.png"));
+
+        region = new WordRegion
+        {
+            Bounds = rectangle,
+            Points = xy
+        };
+
+        return true;
     }
 
     private static void GrowFromPixel(BitArray image, int index,
