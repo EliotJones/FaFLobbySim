@@ -41,14 +41,22 @@ internal class CalculateLobbyOccupancyHandler
                     resultList.Add(otherRegion);
                     consumedIndices.Add(j);
                 }
+                else if (otherRegion.Bounds.TopLeft.Y >= region.Bounds.TopLeft.Y
+                         && otherRegion.Bounds.BottomRight.Y <= region.Bounds.BottomRight.Y)
+                {
+                    resultList.Add(otherRegion);
+                    consumedIndices.Add(j);
+                }
             }
 
-            lines.Add(resultList);
+            lines.Add(resultList.OrderBy(x => x.Bounds.TopLeft.X).ToList());
         }
+
+        lines = lines.OrderBy(x => x[0].Bounds.TopLeft.Y).ToList();
 
         // Table headers are in the top 30% of the screen and occupy more than 50% of the width.
         const int topPercent = 30;
-        const int widthPercent = 50;
+        const int widthPercent = 45;
 
         var yThreshold = widthHeight.Height * (topPercent / 100f);
         var requiredWidth = widthHeight.Width * (widthPercent / 100f);
@@ -122,6 +130,11 @@ internal class CalculateLobbyOccupancyHandler
                 {
                     rowCount++;
                     occupied++;
+                    break;
+                }
+
+                if (j == 0 && words.Count == 0)
+                {
                     break;
                 }
                 
