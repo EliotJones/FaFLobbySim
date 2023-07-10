@@ -28,6 +28,8 @@ internal static class SystemStore
                 Store[identifier] = list;
             }
 
+            Console.WriteLine("Storing occupancy record: " + identifier + " " + occupied + " of " + total);
+
             list.Add(new OccupancyRecord(occupied, total, DateTime.UtcNow));
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Http.Json;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Capturing;
@@ -10,8 +11,18 @@ namespace FaFLobbySimClient;
 
 public static class Program
 {
+    private static readonly Uri ServerUrl = new Uri("https://localhost:7127/");
+
     public static async Task Main(string[] args)
     {
+        var jobName = "paved-cabbage-21";
+
+        var client = new HttpClient
+        {
+            BaseAddress = ServerUrl,
+            Timeout = TimeSpan.FromSeconds(2)
+        };
+
         var occHandle = new CalculateLobbyOccupancyHandler();
         var wordDetector = new WordDetector(true);
 
@@ -25,6 +36,30 @@ public static class Program
             (out CaptureImage? screenshot) => TryScreenshot(focusWindow, out screenshot),
             wordDetector.Detect,
             occHandle.Calculate,
+            async (identifier, occupancy) =>
+            {
+                try
+                {
+                    // Garbage data.
+                    if (occupancy.Total == 0 || occupancy.Occupied > occupancy.Total)
+                    {
+                        return;
+                    }
+
+                    await client.PostAsJsonAsync("upload", new
+                    {
+                        identifier = identifier,
+                        occupied = occupancy.Occupied,
+                        total = occupancy.Total,
+                        clientId = "me"
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed writing occupancy to server: ");
+                    Console.WriteLine(ex);
+                }
+            },
             (output, warning) =>
             {
                 var current = Console.ForegroundColor;
@@ -38,7 +73,7 @@ public static class Program
                 Console.ForegroundColor = current;
             });
 
-        await monitor.Monitor();
+        await monitor.Monitor(jobName);
 
         Console.WriteLine("Run completed");
     }
@@ -112,3 +147,5 @@ public static class Program
 internal delegate void WriteOutput(string output, bool isWarning);
 
 internal delegate bool TryScreenshotProcess([NotNullWhen(true)] out CaptureImage? screenshot);
+
+internal delegate Task WriteOccupancyForJob(string identifier, Occupancy occupancy);

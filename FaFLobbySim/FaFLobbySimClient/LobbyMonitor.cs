@@ -9,21 +9,24 @@ internal class LobbyMonitor
     private readonly TryScreenshotProcess _tryScreenshot;
     private readonly DetectImageWords _wordDetector;
     private readonly CalculateLobbyOccupancy _calculateOccupancy;
+    private readonly WriteOccupancyForJob _writeOccupancy;
     private readonly WriteOutput _log;
 
     public LobbyMonitor(
         TryScreenshotProcess tryScreenshot,
         DetectImageWords wordDetector,
         CalculateLobbyOccupancy calculateOccupancy,
+        WriteOccupancyForJob writeOccupancy,
         WriteOutput log)
     {
         _tryScreenshot = tryScreenshot;
         _wordDetector = wordDetector;
         _calculateOccupancy = calculateOccupancy;
+        _writeOccupancy = writeOccupancy;
         _log = log;
     }
 
-    public async Task Monitor()
+    public async Task Monitor(string identifier)
     {
         do
         {
@@ -51,8 +54,9 @@ internal class LobbyMonitor
 
                     if (occupancy != null)
                     {
-                        // TODO: write value to API.
                         _log($"Current occupancy is {occupancy.Occupied}/{occupancy.Total}", false);
+
+                        await _writeOccupancy(identifier, occupancy);
                     }
                     else
                     {
