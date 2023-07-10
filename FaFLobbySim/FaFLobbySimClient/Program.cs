@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Capturing;
@@ -14,8 +15,14 @@ public static class Program
         var occHandle = new CalculateLobbyOccupancyHandler();
         var wordDetector = new WordDetector(true);
 
+        var focusWindow = new FocusWindowState
+        {
+            FailureCount = 0,
+            FocusWindow = true
+        };
+
         var monitor = new LobbyMonitor(
-            TryScreenshot,
+            (out CaptureImage? screenshot) => TryScreenshot(focusWindow, out screenshot),
             wordDetector.Detect,
             occHandle.Calculate,
             (output, warning) =>
@@ -36,7 +43,7 @@ public static class Program
         Console.WriteLine("Run completed");
     }
 
-    private static bool TryScreenshot(out CaptureImage screenshot)
+    private static bool TryScreenshot(FocusWindowState focusWindowState, [NotNullWhen(true)] out CaptureImage? screenshot)
     {
         screenshot = default;
         try
@@ -44,6 +51,8 @@ public static class Program
             var process = Process.GetProcesses().FirstOrDefault(x => x.MainWindowTitle == "Forged Alliance");
             if (process == null)
             {
+                focusWindowState.FocusWindow = true;
+                focusWindowState.FailureCount = 0;
                 return false;
             }
 
@@ -58,28 +67,48 @@ public static class Program
 
                 if (child?.ControlType == ControlType.Pane)
                 {
-                    screenshot = GetScreenshot(window, child);
+                    if (focusWindowState.FocusWindow)
+                    {
+                        focusWindowState.FocusWindow = false;
+                        window.Focus();
+                    }
+
+                    screenshot = GetScreenshot(child);
                     return true;
                 }
             } while (child != null);
         }
         catch (Exception ex)
         {
+            focusWindowState.FailureCount++;
+
+            if (focusWindowState.FailureCount > 10)
+            {
+                focusWindowState.FocusWindow = true;
+                focusWindowState.FailureCount = 0;
+            }
+
             Console.WriteLine(ex);
         }
 
         return false;
     }
 
-    private static CaptureImage GetScreenshot(Window window, AutomationElement pane)
+    private static CaptureImage GetScreenshot(AutomationElement pane)
     {
-        window.Focus();
         var imageCapture = Capture.Element(pane);
 
         return imageCapture;
+    }
+
+    private class FocusWindowState
+    {
+        public bool FocusWindow { get; set; }
+
+        public int FailureCount { get; set; }
     }
 }
 
 internal delegate void WriteOutput(string output, bool isWarning);
 
-internal delegate bool TryScreenshotProcess(out CaptureImage screenshot);
+internal delegate bool TryScreenshotProcess([NotNullWhen(true)] out CaptureImage? screenshot);
