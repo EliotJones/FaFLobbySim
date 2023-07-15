@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "FaFLobbySimClient": {
+      "commandName": "Project",
+      "commandLineArgs": "test"
+    }
+  }
+}

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.Net.Http.Json;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
@@ -13,6 +14,9 @@ public static class Program
 {
     private static readonly Uri ServerUrl = new Uri("https://localhost:7127/");
 
+    private static int _testOccupancy = 1;
+    private static int _testCounter = 0;
+
     public static async Task Main(string[] args)
     {
         var jobName = "paved-cabbage-21";
@@ -23,6 +27,8 @@ public static class Program
             Timeout = TimeSpan.FromSeconds(2)
         };
 
+        var isTest = args.Any(x => string.Equals("test", x, StringComparison.OrdinalIgnoreCase));
+
         var occHandle = new CalculateLobbyOccupancyHandler();
         var wordDetector = new WordDetector(true);
 
@@ -32,34 +38,44 @@ public static class Program
             FocusWindow = true
         };
 
-        var monitor = new LobbyMonitor(
+        var monitor = isTest ? 
+            new LobbyMonitor(
+                (out CaptureImage? screenshot) =>
+                {
+                    screenshot = new CaptureImage(new Bitmap(20, 20), Rectangle.Empty, new CaptureSettings());
+                    return true;
+                },
+                (image, getter) => new List<WordRegion>
+                {
+                    new WordRegion()
+                },
+                (regions, height) =>
+                {
+                    _testCounter++;
+
+                    if (_testCounter > 10)
+                    {
+                        _testCounter = 0;
+                        if (_testOccupancy > 3)
+                        {
+                            _testOccupancy -= 1;
+                        }
+                        else
+                        {
+                            _testOccupancy += 1;
+                        }
+                    }
+
+                    return new Occupancy(10, _testOccupancy);
+                },
+                async (identifier, occupancy) => await WriteOccupancy(occupancy, identifier, client),
+                (output, warning) => {}
+                )
+            : new LobbyMonitor(
             (out CaptureImage? screenshot) => TryScreenshot(focusWindow, out screenshot),
             wordDetector.Detect,
             occHandle.Calculate,
-            async (identifier, occupancy) =>
-            {
-                try
-                {
-                    // Garbage data.
-                    if (occupancy.Total == 0 || occupancy.Occupied > occupancy.Total)
-                    {
-                        return;
-                    }
-
-                    await client.PostAsJsonAsync("upload", new
-                    {
-                        identifier = identifier,
-                        occupied = occupancy.Occupied,
-                        total = occupancy.Total,
-                        clientId = "me"
-                    });
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Failed writing occupancy to server: ");
-                    Console.WriteLine(ex);
-                }
-            },
+            async (identifier, occupancy) => await WriteOccupancy(occupancy, identifier, client),
             (output, warning) =>
             {
                 var current = Console.ForegroundColor;
@@ -76,6 +92,31 @@ public static class Program
         await monitor.Monitor(jobName);
 
         Console.WriteLine("Run completed");
+    }
+
+    private static async Task WriteOccupancy(Occupancy occupancy, string identifier, HttpClient client)
+    {
+        try
+        {
+            // Garbage data.
+            if (occupancy.Total == 0 || occupancy.Occupied > occupancy.Total)
+            {
+                return;
+            }
+
+            await client.PostAsJsonAsync("upload", new
+            {
+                identifier = identifier,
+                occupied = occupancy.Occupied,
+                total = occupancy.Total,
+                clientId = "me"
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Failed writing occupancy to server: ");
+            Console.WriteLine(ex);
+        }
     }
 
     private static bool TryScreenshot(FocusWindowState focusWindowState, [NotNullWhen(true)] out CaptureImage? screenshot)

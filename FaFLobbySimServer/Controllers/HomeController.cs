@@ -23,6 +23,22 @@ public class HomeController : ControllerBase
         </html>
         """;
 
+    private const string LobbyScript = """
+        var source = new EventSource('/server-sent');
+
+        var elem = document.getElementById('occupancyReporter');
+
+        source.onmessage = function (event) {
+            console.log("SSE event: ", event.data);
+            var parts = event.data.split('\n');
+            if (parts.length !== 2) {
+                return;
+            }
+
+            elem.innerHTML = `Latest Occupancy is: ${parts[0]} / ${parts[1]}`;
+        };
+        """;
+
     private const string LobbyTemplate = """
         <!DOCTYPE html>
         <html>
@@ -31,7 +47,8 @@ public class HomeController : ControllerBase
             </head>
             <body>
                 <h1>Lobby Report: {0}</h1>
-                <p>Latest Occupancy is: {1}</p>
+                <p id="occupancyReporter">Latest Occupancy is: {1}</p>
+                <script>{2}</script>
             </body>
         </html>
         """;
@@ -64,7 +81,8 @@ public class HomeController : ControllerBase
 
         var html = string.Format(LobbyTemplate,
             idSafeish,
-            occStr);
+            occStr,
+            LobbyScript);
 
         return Content(html, "text/html", Encoding.UTF8);
     }

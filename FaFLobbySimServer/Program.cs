@@ -1,3 +1,5 @@
+using Lib.AspNetCore.ServerSentEvents;
+
 namespace FaFLobbySimServer
 {
     public class Program
@@ -8,6 +10,7 @@ namespace FaFLobbySimServer
 
             // Add services to the container.
 
+            builder.Services.AddServerSentEvents();
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -21,13 +24,14 @@ namespace FaFLobbySimServer
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
 
-
             app.MapControllers();
+
+            app.MapServerSentEvents("/server-sent");
 
             app.Run();
         }
