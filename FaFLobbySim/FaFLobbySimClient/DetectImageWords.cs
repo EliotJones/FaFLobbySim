@@ -70,8 +70,8 @@ internal class WordDetector
     }
 
     private Image<Rgb24> GetThresholdedImage(Image<Rgb24> image, GetFilePath savePathGetter)
-    {
-        image.Mutate(x => x.Grayscale().BinaryThreshold(0.4f));
+    { 
+        image.Mutate(x => x.BinaryThreshold(0.39f));
 
         if (_saveFilesLocally)
         {

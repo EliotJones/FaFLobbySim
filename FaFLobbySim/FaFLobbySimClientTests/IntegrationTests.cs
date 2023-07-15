@@ -77,13 +77,22 @@ public class IntegrationTests
         Assert.Equal(12, occupancy.Total);
     }
 
+    [Fact(Skip = "Need to use value binary thresholding")]
+    public void ClosedSlotsTwelveTotal()
+    {
+        var occupancy = RunTest("seven-players-10-spaces-2-closed.png");
+
+        Assert.Equal(7, occupancy.Occupied);
+        Assert.Equal(12, occupancy.Total);
+    }
+
     private static Occupancy RunTest(string filename)
     {
         var imagePath = GetImagePath(filename);
 
         var image = Image.Load<Rgb24>(imagePath);
 
-        var words = new WordDetector(false).Detect(image, _ => string.Empty);
+        var words = new WordDetector(true).Detect(image, s => @"D:\temp\" + s);
 
         var occupancy =
             new CalculateLobbyOccupancyHandler().Calculate(words, new WidthHeight(image.Width, image.Height));
