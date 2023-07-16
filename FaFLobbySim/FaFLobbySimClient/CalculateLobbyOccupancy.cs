@@ -68,6 +68,8 @@ internal class CalculateLobbyOccupancyHandler
 
         var yThreshold = widthHeight.Height * (topPercent / 100f);
         var requiredWidth = widthHeight.Width * (widthPercent / 100f);
+        var mid20Left = widthHeight.Width * 0.4;
+        var mid20Right = widthHeight.Width * 0.6;
 
         List<WordRegion>? possibleHeaderRow = null;
         foreach (var line in lines)
@@ -78,6 +80,13 @@ internal class CalculateLobbyOccupancyHandler
             var width = maxX - minX;
 
             if (line.Count < 6)
+            {
+                continue;
+            }
+
+            var anyInMid20 = line.Any(x => x.Bounds.TopLeft.X >= mid20Left && x.Bounds.BottomRight.X <= mid20Right);
+
+            if (!anyInMid20)
             {
                 continue;
             }
@@ -122,6 +131,11 @@ internal class CalculateLobbyOccupancyHandler
                 : possibleHeaderRow[i + 1].Bounds.TopLeft.X - 1;
 
             columnXs.Add((region.Bounds.TopLeft.X - 1, endX));
+        }
+
+        if (columnXs.Count == 0)
+        {
+            return null;
         }
 
         var rowCount = 0;

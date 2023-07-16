@@ -86,6 +86,15 @@ public class IntegrationTests
         Assert.Equal(12, occupancy.Total);
     }
 
+    [Fact]
+    public void SingleHostThresholded()
+    {
+        var occupancy = RunTest("thresholdeda8906b1f.png");
+
+        Assert.Equal(1, occupancy.Occupied);
+        Assert.Equal(10, occupancy.Total);
+    }
+
     private static Occupancy RunTest(string filename)
     {
         var imagePath = GetImagePath(filename);
