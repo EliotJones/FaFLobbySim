@@ -24,11 +24,45 @@ internal static class SystemStore
         {
             if (!Store.TryGetValue(identifier, out var list))
             {
+                if (Store.Count > 20)
+                {
+                    var keysToRemove = new List<string>();
+                    foreach (var kvp in Store)
+                    {
+                        if (kvp.Value.Count == 0)
+                        {
+                            continue;
+                        }
+
+                        var lastUpdate = kvp.Value.Max(x => x.Added);
+                        var gapMinutes = (DateTime.UtcNow - lastUpdate).TotalMinutes;
+                        if (gapMinutes > 10)
+                        {
+                            keysToRemove.Add(kvp.Key);
+                        }
+                    }
+
+                    foreach (var key in keysToRemove)
+                    {
+                        Store.Remove(key);
+                    }
+
+                    if (keysToRemove.Count == 0)
+                    {
+                        Store.Clear();
+                    }
+                }
+
                 list = new List<OccupancyRecord>();
                 Store[identifier] = list;
             }
 
             Console.WriteLine("Storing occupancy record: " + identifier + " " + occupied + " of " + total);
+
+            if (list.Count > 500)
+            {
+                list.RemoveRange(0, 100);
+            }
 
             list.Add(new OccupancyRecord(occupied, total, DateTime.UtcNow));
         }

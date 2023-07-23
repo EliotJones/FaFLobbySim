@@ -27,15 +27,18 @@ public class HomeController : ControllerBase
         var source = new EventSource('/server-sent');
 
         var elem = document.getElementById('occupancyReporter');
+        var elemTs = document.getElementById('occupancyTimestamp');
 
         source.onmessage = function (event) {
-            console.log("SSE event: ", event.data);
             var parts = event.data.split('\n');
             if (parts.length !== 2) {
                 return;
             }
 
             elem.innerHTML = `Latest Occupancy is: ${parts[0]} / ${parts[1]}`;
+
+            var dateStr = new Date().toLocaleString();
+            elemTs.innerHTML = `Reported at: ${dateStr}`
         };
         """;
 
@@ -48,6 +51,7 @@ public class HomeController : ControllerBase
             <body>
                 <h1>Lobby Report: {0}</h1>
                 <p id="occupancyReporter">Latest Occupancy is: {1}</p>
+                <p id="occupancyTimestamp"></p>
                 <script>{2}</script>
             </body>
         </html>
