@@ -12,7 +12,7 @@ namespace FaFLobbySimClient;
 
 public static class Program
 {
-    private static readonly Uri ServerUrl = new Uri("https://localhost:7127/");
+    private static readonly Uri ServerUrl = new Uri("http://eliot-jones.com:6575/");
 
     private static int _testOccupancy = 1;
     private static int _testCounter = 0;
